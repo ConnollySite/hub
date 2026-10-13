@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Period Calendar — Connolly Site</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--ink:#16202e;--mut:#64748b;--line:#e2e8f0;--a:#dbeafe;--b:#fef3c7;--ac:#1d4ed8;--bc:#b45309;--today:#dc2626}
+@media(prefers-color-scheme:dark){:root{--bg:#0f172a;--card:#1e293b;--ink:#e2e8f0;--mut:#94a3b8;--line:#334155;--a:#1e3a8a;--b:#78350f;--ac:#93c5fd;--bc:#fcd34d;--today:#f87171}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:16px}
+a.back{color:var(--mut);text-decoration:none;font-size:13px}
+h1{margin:6px 0 2px;font-size:22px}.sub{color:var(--mut);font-size:13px;margin-bottom:14px}
+.wrap{display:grid;grid-template-columns:1fr 300px;gap:14px}@media(max-width:800px){.wrap{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.nav{display:flex;align-items:center;gap:8px;margin-bottom:10px}.nav h2{flex:1;margin:0;font-size:18px;text-align:center}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:6px 12px;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.dow{font-size:11px;font-weight:700;text-align:center;color:var(--mut);padding:4px 0;text-transform:uppercase}
+.d{min-height:60px;border-radius:8px;padding:4px 6px;position:relative;cursor:pointer;border:2px solid transparent}
+.d.A{background:var(--a)}.d.B{background:var(--b)}.d.out{opacity:.4}
+.d .n{font-weight:600}.d .tag{position:absolute;left:5px;bottom:3px;right:3px;font-size:9.5px;font-weight:700;line-height:1.1}
+.d.A .tag{color:var(--ac)}.d.B .tag{color:var(--bc)}
+.d.today{border-color:var(--today)}.d.today .n{color:var(--today)}
+.d.sel{outline:2px solid var(--ink)}
+.big{font-size:18px;font-weight:700;margin:0 0 4px}.mut{color:var(--mut);font-size:13px}
+.bar{height:8px;background:var(--line);border-radius:4px;margin:8px 0;overflow:hidden}.bar i{display:block;height:100%;background:var(--ac)}
+ul{list-style:none;margin:8px 0 0;padding:0}li{padding:7px 8px;border-radius:8px;margin-bottom:4px;display:flex;justify-content:space-between;gap:8px;cursor:pointer;font-size:14px}
+li.A{background:var(--a)}li.B{background:var(--b)}li.cur{font-weight:700;outline:2px solid var(--ink)}
+</style></head><body><main>
+<a class="back" href="./">← Hub</a>
+<h1>Period Calendar</h1>
+<div class="sub">Weeks run Friday → Thursday. Each period is 2 weeks (14 days): 16 Oct – 29 Oct, then 30 Oct – 12 Nov, and so on.</div>
+<div class="wrap">
+ <div class="card">
+  <div class="nav"><button id="prev">‹</button><h2 id="title"></h2><button id="next">›</button><button id="todayBtn">Today</button></div>
+  <div class="grid" id="dow"></div><div class="grid" id="days" style="margin-top:3px"></div>
+ </div>
+ <div>
+  <div class="card" id="info"></div>
+  <div class="card" style="margin-top:14px"><b>Periods</b><ul id="list"></ul></div>
+ </div>
+</div>
+</main>
+<script>
+// Anchor: first day of a period. Change here if the cycle ever shifts.
+var ANCHOR=Date.UTC(2026,9,16), DAY=86400000, LEN=14;
+var MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
+var MS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var DOW=['Fri','Sat','Sun','Mon','Tue','Wed','Thu'];
+function utc(y,m,d){return Date.UTC(y,m,d)}
+function todayU(){var n=new Date();return utc(n.getFullYear(),n.getMonth(),n.getDate())}
+function pidx(t){return Math.floor((t-ANCHOR)/(DAY*LEN))}
+function pstart(i){return ANCHOR+i*LEN*DAY}
+function fmt(t){var d=new Date(t);return d.getUTCDate()+' '+MS[d.getUTCMonth()]}
+function fmtY(t){return fmt(t)+' '+new Date(t).getUTCFullYear()}
+var T=todayU(), view=new Date(T), sel=T;
+view=utc(view.getUTCFullYear(),view.getUTCMonth(),1);
+document.getElementById('dow').innerHTML=DOW.map(function(x){return '<div class="dow">'+x+'</div>'}).join('');
+function render(){
+  var v=new Date(view), y=v.getUTCFullYear(), m=v.getUTCMonth();
+  document.getElementById('title').textContent=MON[m]+' '+y;
+  // Friday-first: JS getUTCDay Fri=5 -> col 0
+  var first=utc(y,m,1), col=(new Date(first).getUTCDay()+2)%7, start=first-col*DAY, h='';
+  for(var i=0;i<42;i++){
+    var t=start+i*DAY, d=new Date(t), p=pidx(t), cls='d '+(p%2===0?'A':'B');
+    if(d.getUTCMonth()!==m)cls+=' out'; if(t===T)cls+=' today'; if(t===sel)cls+=' sel';
+    var tag='';
+    if(t===pstart(p))tag='Start';
+    else if(t===pstart(p)+(LEN-1)*DAY)tag='End';
+    h+='<div class="'+cls+'" data-t="'+t+'"><span class="n">'+d.getUTCDate()+'</span>'+(tag?'<span class="tag">'+tag+'</span>':'')+'</div>';
+    if(i===34&&new Date(start+35*DAY).getUTCMonth()!==m){break}
+  }
+  document.getElementById('days').innerHTML=h;
+  info(); list();
+}
+function info(){
+  var p=pidx(sel), s=pstart(p), e=s+(LEN-1)*DAY, n=Math.round((sel-s)/DAY)+1, wk=n<=7?1:2;
+  var rel=sel===T?'Today':fmtY(sel);
+  document.getElementById('info').innerHTML='<div class="mut">'+rel+'</div><p class="big">'+fmt(s)+' – '+fmt(e)+'</p>'+
+   '<div>Day '+n+' of '+LEN+' · Week '+wk+' of 2</div><div class="bar"><i style="width:'+(n/LEN*100)+'%"></i></div>'+
+   '<div class="mut">Week 1: '+fmt(s)+' – '+fmt(s+6*DAY)+'<br>Week 2: '+fmt(s+7*DAY)+' – '+fmt(e)+'</div>'+
+   '<div class="mut" style="margin-top:6px">Next period starts '+fmtY(e+DAY)+'</div>';
+}
+function list(){
+  var c=pidx(sel), h='';
+  for(var i=c-2;i<=c+6;i++){var s=pstart(i),e=s+(LEN-1)*DAY;
+    h+='<li class="'+(i%2===0?'A':'B')+(i===c?' cur':'')+'" data-t="'+s+'"><span>'+fmt(s)+' – '+fmt(e)+'</span><span class="mut">'+(i===pidx(T)?'now':'')+'</span></li>';}
+  document.getElementById('list').innerHTML=h;
+}
+function go(t){sel=t;var d=new Date(t);view=utc(d.getUTCFullYear(),d.getUTCMonth(),1);render()}
+document.getElementById('days').onclick=function(e){var el=e.target.closest('.d');if(el){sel=+el.dataset.t;render()}};
+document.getElementById('list').onclick=function(e){var el=e.target.closest('li');if(el)go(+el.dataset.t)};
+document.getElementById('prev').onclick=function(){var d=new Date(view);view=utc(d.getUTCFullYear(),d.getUTCMonth()-1,1);render()};
+document.getElementById('next').onclick=function(){var d=new Date(view);view=utc(d.getUTCFullYear(),d.getUTCMonth()+1,1);render()};
+document.getElementById('todayBtn').onclick=function(){go(T)};
+render();
+</script></body></html>
