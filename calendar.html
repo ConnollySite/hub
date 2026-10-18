@@ -24,11 +24,30 @@ button{font:inherit;border:1px solid var(--line);background:var(--card);color:va
 .big{font-size:18px;font-weight:700;margin:0 0 4px}.mut{color:var(--mut);font-size:13px}
 .bar{height:8px;background:var(--line);border-radius:4px;margin:8px 0;overflow:hidden}.bar i{display:block;height:100%;background:var(--ac)}
 ul{list-style:none;margin:8px 0 0;padding:0}li{padding:7px 8px;border-radius:8px;margin-bottom:4px;display:flex;justify-content:space-between;gap:8px;cursor:pointer;font-size:14px}
+textarea,input,select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px;width:100%}
+textarea{min-height:76px;resize:vertical}
+.ind{position:absolute;top:3px;right:4px;display:flex;gap:3px;font-size:10px;font-weight:700;line-height:1}
+.ind span{border-radius:999px;padding:1px 5px;background:rgba(0,0,0,.12)}
+.ind .nt{background:#7c3aed;color:#fff}.ind .hl{background:#0d9488;color:#fff}.ind .dr{background:#16a34a;color:#fff}.ind .dd{background:#f59e0b;color:#fff}
+h3{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut)}
+.sec{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.note{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:6px 0;font-size:14px;white-space:pre-wrap;word-break:break-word}
+.note .meta{display:flex;justify-content:space-between;gap:8px;color:var(--mut);font-size:11.5px;margin-top:4px;white-space:normal}
+.note a{color:var(--mut);cursor:pointer;text-decoration:underline;margin-left:8px}
+.at{color:#7c3aed;font-weight:700}
+.pri{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.row{display:flex;gap:6px;margin-top:6px;align-items:center}.row .grow{flex:1}
+#mention{position:absolute;z-index:20;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.25);min-width:220px;max-width:92vw;display:none;overflow:hidden}
+#mention div{padding:8px 10px;cursor:pointer;font-size:14px;display:flex;justify-content:space-between;gap:10px}
+#mention div.on,#mention div:hover{background:var(--a)}
+.msg{font-size:12.5px;margin-top:6px;min-height:16px}.msg.bad{color:#dc2626}.msg.good{color:#16a34a}
+.lnk{display:inline-block;margin-top:6px;font-size:13px;color:var(--ac)}
+.box{background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:8px;margin:6px 0;font-size:13px}
 li.A{background:var(--a)}li.B{background:var(--b)}li.cur{font-weight:700;outline:2px solid var(--ink)}
 </style></head><body><main>
 <a class="back" href="./">← Hub</a>
 <h1>Period Calendar</h1>
-<div class="sub">Weeks run Friday → Thursday. Each period is 2 weeks (14 days): 16 Oct – 29 Oct, then 30 Oct – 12 Nov, and so on.</div>
+<div class="sub">Weeks run Friday → Thursday. Each period is 2 weeks (14 days): 16 Oct – 29 Oct, then 30 Oct – 12 Nov, and so on. Small badges on a day: <b style="color:#7c3aed">purple</b> = notes, <b style="color:#0d9488">teal</b> = people on holiday, <b style="color:#16a34a">✓</b> = Duty Roster ready, <b style="color:#f59e0b">•</b> = saved but not ready.</div>
 <div class="wrap">
  <div class="card">
   <div class="nav"><button id="prev">‹</button><h2 id="title"></h2><button id="next">›</button><button id="todayBtn">Today</button></div>
@@ -36,10 +55,11 @@ li.A{background:var(--a)}li.B{background:var(--b)}li.cur{font-weight:700;outline
  </div>
  <div>
   <div class="card" id="info"></div>
+  <div class="card" id="dayCard" style="margin-top:14px"></div>
   <div class="card" style="margin-top:14px"><b>Periods</b><ul id="list"></ul></div>
  </div>
 </div>
-</main>
+</main><div id="mention"></div>
 <script>
 // Anchor: first day of a period. Change here if the cycle ever shifts.
 var ANCHOR=Date.UTC(2026,9,16), DAY=86400000, LEN=14;
@@ -66,11 +86,11 @@ function render(){
     var tag='';
     if(t===pstart(p))tag='Start';
     else if(t===pstart(p)+(LEN-1)*DAY)tag='End';
-    h+='<div class="'+cls+'" data-t="'+t+'"><span class="n">'+d.getUTCDate()+'</span>'+(tag?'<span class="tag">'+tag+'</span>':'')+'</div>';
+    h+='<div class="'+cls+'" data-t="'+t+'"><span class="n">'+d.getUTCDate()+'</span>'+(tag?'<span class="tag">'+tag+'</span>':'')+indicators(t)+'</div>';
     if(i===34&&new Date(start+35*DAY).getUTCMonth()!==m){break}
   }
   document.getElementById('days').innerHTML=h;
-  info(); list();
+  info(); list(); renderDay(); loadNotes(); loadOnboard();
 }
 function info(){
   var p=pidx(sel), s=pstart(p), e=s+(LEN-1)*DAY, n=Math.round((sel-s)/DAY)+1, wk=n<=7?1:2;
@@ -92,5 +112,177 @@ document.getElementById('list').onclick=function(e){var el=e.target.closest('li'
 document.getElementById('prev').onclick=function(){var d=new Date(view);view=utc(d.getUTCFullYear(),d.getUTCMonth()-1,1);render()};
 document.getElementById('next').onclick=function(){var d=new Date(view);view=utc(d.getUTCFullYear(),d.getUTCMonth()+1,1);render()};
 document.getElementById('todayBtn').onclick=function(){go(T)};
+/* ===== Connections: Profiles (notes + @people), Onboard (holidays + Duty Roster status) ===== */
+var PROF_URL='https://script.google.com/macros/s/AKfycbwIlCX1TCTRSwmyMY83gCqmGd4IvDpUT0PJ5phhrHe0hUCFPvL3q_Xiv3pv_76hP5plbw/exec';
+var OP_URL='https://script.google.com/macros/s/AKfycbzyF9G_x34LnFZwufDixy3yff7WdMxnVlfeohSYnmlN8Dg025mdryAWMy1K-z0UA6dPTw/exec';
+function $(id){return document.getElementById(id)}
+function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function ls(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsw(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function ds(t){return new Date(t).toISOString().slice(0,10)}
+function longDate(t){var d=new Date(t);return DOW[(d.getUTCDay()+2)%7]+' '+fmtY(t)}
+var cred=null;try{cred=JSON.parse(ls('profiles_cred')||'null')}catch(e){}
+var users=['Leandro Rocha','Michal Rogala'];
+var people=[], notes={}, loaded={}, opPin=ls('cal_op_pin')||ls('holiday_cloud_pin')||ls('roster_op_pin')||'';
+try{opPin=opPin||sessionStorage.getItem('holiday_cloud_pin')||''}catch(e){}
+var shownDay='', hol=null, duty=null, stt={prof:'',hol:'',duty:''}, editing=null;
+
+function post(url,body){return fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}).then(function(r){return r.json()})}
+function pcall(body){return post(PROF_URL,Object.assign({user:cred&&cred.user,pin:cred&&cred.pin},body))}
+function dispName(p){var n=String(p.name||'').trim(),b=String(p.badge||'').trim();return(!b||/\(\s*\d+\s*\)\s*$/.test(n))?n:n+' ('+b+')'}
+function norm(x){return String(x||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')}
+
+/* ---- load month notes (+ people) ---- */
+function monthRange(){var v=new Date(view),y=v.getUTCFullYear(),m=v.getUTCMonth();return[ds(utc(y,m,1)-7*DAY),ds(utc(y,m+1,1)+7*DAY)]}
+function loadNotes(force){
+  if(!cred){return}
+  var r=monthRange(),key=r[0];
+  if(loaded[key]&&!force)return; loaded[key]='loading';
+  stt.prof='Loading notes…';renderDay();
+  pcall({action:'calList',from:r[0],to:r[1]}).then(function(res){
+    if(res.error){loaded[key]=0;stt.prof=res.error;if(/PIN|supervisor/i.test(res.error)){cred=null;try{localStorage.removeItem('profiles_cred')}catch(e){}}renderDay();return}
+    people=res.people||people; stt.prof='';
+    Object.keys(notes).forEach(function(d){if(d>=r[0]&&d<=r[1])delete notes[d]});
+    (res.notes||[]).forEach(function(n){(notes[n.date]=notes[n.date]||[]).push(n)});
+    loaded[key]=1;render();
+  }).catch(function(){loaded[key]=0;stt.prof='No connection - try again';renderDay()});
+}
+/* ---- holidays + duty status (Onboard backend, PIN typed once) ---- */
+function loadOnboard(){
+  if(!opPin)return;
+  if(hol===null){hol='loading';
+    post(OP_URL,{kind:'holiday',action:'load',pin:opPin}).then(function(r){
+      if(!r.ok){hol=null;stt.hol=(r.error==='auth'?'Wrong PIN':r.error||'Error');if(r.error==='auth')opPin='';renderDay();return}
+      hol=((r.data&&r.data.holidays)||[]);stt.hol='';render();
+    }).catch(function(){hol=null;stt.hol='No connection';renderDay()});}
+  if(duty===null){duty='loading';
+    post(OP_URL,{kind:'dutyload',pin:opPin}).then(function(r){
+      if(!r.ok){duty=null;stt.duty=(r.error==='auth'?'Wrong PIN':r.error||'Error');return}
+      duty=((r.data&&r.data.days)||{});stt.duty='';render();
+    }).catch(function(){duty=null;stt.duty='No connection'});}
+}
+function holOn(d){if(!Array.isArray(hol))return[];var out=[];hol.forEach(function(h){if(d>=h.start&&d<=h.end&&out.indexOf(h.name)<0)out.push(h.name)});return out}
+function dutyOn(d){if(!duty||duty==='loading')return'';var x=duty[d];if(!x)return'';return x.ready?'ready':'draft'}
+
+/* ---- calendar cells: small indicators ---- */
+function indicators(t){
+  var d=ds(t),h='',n=(notes[d]||[]).length,hc=holOn(d).length,du=dutyOn(d);
+  if(n)h+='<span class="nt">'+n+'</span>';
+  if(hc)h+='<span class="hl">'+hc+'</span>';
+  if(du)h+='<span class="'+(du==='ready'?'dr':'dd')+'">'+(du==='ready'?'✓':'•')+'</span>';
+  return h?'<div class="ind">'+h+'</div>':'';
+}
+
+/* ---- @mentions ---- */
+function markMentions(text){
+  var html=esc(text);
+  people.slice().sort(function(a,b){return dispName(b).length-dispName(a).length}).forEach(function(p){
+    var tag=esc('@'+dispName(p)); if(html.indexOf(tag)>=0)html=html.split(tag).join('<span class="at">'+tag+'</span>')});
+  return html;
+}
+function mentionIds(text){
+  var left=text,ids=[];
+  people.slice().sort(function(a,b){return dispName(b).length-dispName(a).length}).forEach(function(p){
+    var tag='@'+dispName(p),tag2='@'+p.name;
+    [tag,tag2].forEach(function(tg){if(left.indexOf(tg)>=0){if(ids.indexOf(p.id)<0)ids.push(p.id);left=left.split(tg).join(' ')}})});
+  return ids;
+}
+var menuItems=[],menuIdx=0,menuRange=null;
+function suggest(q){
+  var words=norm(q).split(/\s+/).filter(Boolean);
+  if(!words.length)return people.slice(0,6);
+  return people.filter(function(p){var hay=norm(p.name).split(/\s+/).concat([norm(p.badge)]);
+    return words.every(function(w){return hay.some(function(h){return h.indexOf(w)===0})||(w.length>2&&norm(p.name).indexOf(w)>=0)})}).slice(0,6);
+}
+function hideMenu(){$('mention').style.display='none';menuItems=[]}
+function checkMention(){
+  var ta=$('noteTxt');if(!ta)return hideMenu();
+  var pos=ta.selectionStart,before=ta.value.slice(0,pos),m=before.match(/(?:^|\s)@([^@\n]{0,40})$/);
+  if(!m||!people.length)return hideMenu();
+  menuItems=suggest(m[1]);
+  if(!menuItems.length)return hideMenu();
+  menuRange=[pos-m[1].length-1,pos];menuIdx=0;drawMenu();
+}
+function drawMenu(){
+  var box=$('mention'),ta=$('noteTxt'),r=ta.getBoundingClientRect();
+  box.innerHTML=menuItems.map(function(p,i){return'<div data-i="'+i+'" class="'+(i===menuIdx?'on':'')+'"><b>'+esc(p.name)+'</b><span class="mut">'+esc(p.badge?'#'+p.badge:'')+'</span></div>'}).join('');
+  box.style.display='block';box.style.left=(r.left+window.scrollX)+'px';
+  var top=r.bottom+window.scrollY+4;box.style.top=top+'px';
+}
+function pick(i){
+  var p=menuItems[i],ta=$('noteTxt');if(!p)return;
+  var ins='@'+dispName(p)+' ',v=ta.value;
+  ta.value=v.slice(0,menuRange[0])+ins+v.slice(menuRange[1]);
+  var c=menuRange[0]+ins.length;ta.focus();ta.setSelectionRange(c,c);hideMenu();
+}
+$('mention').addEventListener('mousedown',function(e){var el=e.target.closest('div[data-i]');if(el){e.preventDefault();pick(+el.dataset.i)}});
+$('mention').addEventListener('touchstart',function(e){var el=e.target.closest('div[data-i]');if(el){e.preventDefault();pick(+el.dataset.i)}},{passive:false});
+
+/* ---- the selected day panel ---- */
+function opAsk(){return opPin?'':'<div class="box">Holidays and Duty Roster need the Onboard supervisor PIN (asked once on this device).<div class="row"><input id="opPinIn" type="password" inputmode="numeric" placeholder="PIN"><button id="opPinBtn">Connect</button></div><div class="msg bad">'+esc(stt.hol||'')+'</div></div>'}
+function renderDay(){
+  var c=$('dayCard');if(!c)return;
+  var d=ds(sel),h='<h3>'+(sel===T?'Today · ':'')+esc(longDate(sel))+'</h3>';
+  /* holidays */
+  var names=holOn(d);
+  h+='<div class="sec"><h3>On holiday</h3>'+(opPin?(hol==='loading'||hol===null?'<div class="mut">Loading…</div>':(names.length?'<div>'+names.map(esc).join(', ')+'</div><div class="mut">'+names.length+' away</div>':'<div class="mut">Nobody on holiday</div>')):'')+opAsk()+'<a class="lnk" href="../rosters/holidays.html">Open Holiday Manager →</a></div>';
+  /* duty roster */
+  var du=dutyOn(d);
+  h+='<div class="sec"><h3>Duty Roster</h3>'+(opPin?(duty==='loading'||duty===null?'<div class="mut">Loading…</div>':'<div>'+(du==='ready'?'✅ Marked as ready':du==='draft'?'🟡 Saved, not marked ready':'<span class="mut">No roster saved for this day</span>')+'</div>'):'<div class="mut">Connect above to see it</div>')+'<a class="lnk" href="../rosters/duty.html?date='+d+'">Open Duty Roster for this day →</a></div>';
+  /* notes */
+  h+='<div class="sec"><h3>Notes &amp; reminders</h3>';
+  if(!cred){
+    h+='<div class="box">Sign in with your Profiles login (once on this device) to write notes and tag people with @.<div class="row"><select id="prUser">'+users.map(function(u){return'<option>'+esc(u)+'</option>'}).join('')+'</select></div><div class="row"><input id="prPin" type="password" inputmode="numeric" placeholder="Profiles PIN"><button id="prBtn">Sign in</button></div><div class="msg bad" id="prMsg">'+esc(stt.prof)+'</div></div>';
+  }else{
+    var list=notes[d]||[];
+    if(!list.length)h+='<div class="mut">'+(stt.prof||'No notes for this day')+'</div>';
+    list.sort(function(a,b){return String(a.created)<String(b.created)?-1:1}).forEach(function(n){
+      h+='<div class="note"><div>'+markMentions(n.text)+'</div><div class="meta"><span>'+esc(n.author)+' · '+esc(String(n.created).slice(0,16))+(n.employeeIds&&n.employeeIds.length?' · in '+n.employeeIds.length+' profile'+(n.employeeIds.length>1?'s':''):'')+'</span><span><a data-edit="'+esc(n.id)+'">Edit</a><a data-del="'+esc(n.id)+'">Delete</a></span></div></div>'});
+    h+='<textarea id="noteTxt" placeholder="Write a note or reminder for this day. Type @ and a name to link it to an employee."></textarea>';
+    h+='<div class="row"><button class="pri grow" id="noteSave">'+(editing?'Update note':'Save note')+'</button>'+(editing?'<button id="noteCancel">Cancel</button>':'')+'</div><div class="msg" id="noteMsg"></div>';
+    h+='<div class="mut" style="font-size:12px">Notes with @Name also appear in that person\'s Profiles history.</div>';
+  }
+  h+='</div>';
+  var ta=$('noteTxt'),keep=ta?ta.value:'';
+  if(shownDay!==d){keep='';editing=null;hideMenu()} shownDay=d;
+  c.innerHTML=h;
+  if($('noteTxt')&&keep)$('noteTxt').value=keep;
+}
+function msg(t,good){var m=$('noteMsg');if(m){m.textContent=t;m.className='msg '+(good?'good':'bad')}}
+$('dayCard').addEventListener('click',function(e){
+  var t=e.target;
+  if(t.id==='prBtn'){var u=$('prUser').value,p=$('prPin').value.trim();if(!p)return;
+    $('prMsg').textContent='Checking…';
+    post(PROF_URL,{user:u,pin:p,action:'login'}).then(function(r){
+      if(r.error){$('prMsg').textContent=r.error;return}
+      cred={user:u,pin:p};lsw('profiles_cred',JSON.stringify(cred));if(r.users)users=r.users;stt.prof='';loaded={};render();
+    }).catch(function(){$('prMsg').textContent='No connection - try again'});return}
+  if(t.id==='opPinBtn'){var v=$('opPinIn').value.trim();if(!v)return;opPin=v;lsw('cal_op_pin',v);hol=null;duty=null;stt.hol='';loadOnboard();renderDay();return}
+  if(t.id==='noteSave'){saveNote();return}
+  if(t.id==='noteCancel'){editing=null;renderDay();return}
+  if(t.dataset&&t.dataset.edit){var d=ds(sel),n=(notes[d]||[]).filter(function(x){return x.id===t.dataset.edit})[0];if(n){editing=n.id;renderDay();$('noteTxt').value=n.text;$('noteTxt').focus()}return}
+  if(t.dataset&&t.dataset.del){
+    if(t.dataset.armed!=='1'){t.dataset.armed='1';t.textContent='Tap again to delete';setTimeout(function(){if(t){t.dataset.armed='';t.textContent='Delete'}},3000);return}
+    pcall({action:'calDelete',id:t.dataset.del}).then(function(r){if(r.error){msg(r.error)}else{loaded={};loadNotes(true)}});return}
+});
+$('dayCard').addEventListener('input',function(e){if(e.target.id==='noteTxt')checkMention()});
+$('dayCard').addEventListener('keydown',function(e){
+  if(e.target.id!=='noteTxt'||!menuItems.length)return;
+  if(e.key==='ArrowDown'){e.preventDefault();menuIdx=(menuIdx+1)%menuItems.length;drawMenu()}
+  else if(e.key==='ArrowUp'){e.preventDefault();menuIdx=(menuIdx+menuItems.length-1)%menuItems.length;drawMenu()}
+  else if(e.key==='Enter'||e.key==='Tab'){e.preventDefault();pick(menuIdx)}
+  else if(e.key==='Escape'){hideMenu()}
+});
+document.addEventListener('click',function(e){if(!e.target.closest('#mention')&&e.target.id!=='noteTxt')hideMenu()});
+function saveNote(){
+  var ta=$('noteTxt'),text=ta.value.trim();if(!text){msg('Write something first');return}
+  var b=$('noteSave');b.disabled=true;msg('Saving…',true);
+  pcall({action:'calSave',note:{id:editing||undefined,date:ds(sel),text:text,mentions:mentionIds(text)}}).then(function(r){
+    b.disabled=false;
+    if(r.error){msg(r.error);if(/PIN|supervisor/i.test(r.error)){cred=null;try{localStorage.removeItem('profiles_cred')}catch(e){}renderDay()}return}
+    editing=null;ta.value='';loaded={};loadNotes(true);
+  }).catch(function(){b.disabled=false;msg('No connection - your text is still here, try again')});
+}
+
 render();
 </script></body></html>
