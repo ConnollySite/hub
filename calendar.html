@@ -2,6 +2,13 @@
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Period Calendar — Connolly Site</title>
+<link rel="manifest" href="calendar.webmanifest">
+<meta name="theme-color" content="#0f172a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Calendar">
+<link rel="apple-touch-icon" href="cal-apple-touch-icon.png">
+<link rel="icon" type="image/png" href="cal-icon-192.png">
 <style>
 :root{--bg:#f4f6f9;--card:#fff;--ink:#16202e;--mut:#64748b;--line:#e2e8f0;--a:#dbeafe;--b:#fef3c7;--ac:#1d4ed8;--bc:#b45309;--today:#dc2626}
 @media(prefers-color-scheme:dark){:root{--bg:#0f172a;--card:#1e293b;--ink:#e2e8f0;--mut:#94a3b8;--line:#334155;--a:#1e3a8a;--b:#78350f;--ac:#93c5fd;--bc:#fcd34d;--today:#f87171}}
@@ -44,8 +51,23 @@ h3{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.5px;co
 .lnk{display:inline-block;margin-top:6px;font-size:13px;color:var(--ac)}
 .box{background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:8px;margin:6px 0;font-size:13px}
 li.A{background:var(--a)}li.B{background:var(--b)}li.cur{font-weight:700;outline:2px solid var(--ink)}
+.side{display:flex;flex-direction:column;gap:14px}.side>.card{margin-top:0!important}
+.topbar{display:flex;align-items:center;gap:10px}.topbar .who{flex:1;text-align:right;font-size:12.5px;color:var(--mut)}
+#lock{position:fixed;inset:0;z-index:50;background:var(--bg);display:none;align-items:center;justify-content:center;padding:20px}
+#lock.show{display:flex}
+#lock .lk{width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+#lock h2{margin:0 0 4px;font-size:20px}#lock label{display:block;font-size:13px;color:var(--mut);margin:12px 0 4px}
+#lock button.pri{width:100%;margin-top:16px;padding:12px;font-size:16px}
+@media(max-width:600px){
+ main{padding:calc(8px + env(safe-area-inset-top)) 10px calc(16px + env(safe-area-inset-bottom))}
+ h1{font-size:19px}.sub{display:none}
+ .d{min-height:46px;padding:3px 4px}.d .tag{font-size:8.5px}.ind{font-size:9px}
+ .nav h2{font-size:16px}button{padding:8px 11px}
+ #dayCard{order:-1}
+ textarea{font-size:16px}input,select{font-size:16px}
+}
 </style></head><body><main>
-<a class="back" href="./">← Hub</a>
+<div class="topbar"><a class="back" href="./">← Hub</a><span class="who" id="who"></span><button id="signOut" style="display:none">Sign out</button></div>
 <h1>Period Calendar</h1>
 <div class="sub">Weeks run Friday → Thursday. Each period is 2 weeks (14 days): 16 Oct – 29 Oct, then 30 Oct – 12 Nov, and so on. Small badges on a day: <b style="color:#7c3aed">purple</b> = notes, <b style="color:#0d9488">teal</b> = people on holiday, <b style="color:#16a34a">✓</b> = Duty Roster ready, <b style="color:#f59e0b">•</b> = saved but not ready.</div>
 <div class="wrap">
@@ -53,13 +75,17 @@ li.A{background:var(--a)}li.B{background:var(--b)}li.cur{font-weight:700;outline
   <div class="nav"><button id="prev">‹</button><h2 id="title"></h2><button id="next">›</button><button id="todayBtn">Today</button></div>
   <div class="grid" id="dow"></div><div class="grid" id="days" style="margin-top:3px"></div>
  </div>
- <div>
+ <div class="side">
   <div class="card" id="info"></div>
   <div class="card" id="dayCard" style="margin-top:14px"></div>
   <div class="card" style="margin-top:14px"><b>Periods</b><ul id="list"></ul></div>
  </div>
 </div>
 </main><div id="mention"></div>
+<div id="lock"><div class="lk"><h2>Period Calendar</h2><div class="mut">Supervisors only. Sign in once on this phone with your Profiles PIN. Notes are shared between the supervisors.</div>
+<label for="lkUser">Supervisor</label><select id="lkUser"></select>
+<label for="lkPin">PIN</label><input type="password" id="lkPin" inputmode="numeric" autocomplete="current-password" maxlength="12">
+<button class="pri" id="lkBtn">Sign in</button><div class="msg bad" id="lkMsg"></div></div></div>
 <script>
 // Anchor: first day of a period. Change here if the cycle ever shifts.
 var ANCHOR=Date.UTC(2026,9,16), DAY=86400000, LEN=14;
@@ -285,4 +311,26 @@ function saveNote(){
 }
 
 render();
+
+/* ===== Sign-in for the whole calendar (shared with Profiles: same supervisors, same PIN; wrong PINs can be retried) ===== */
+function showLock(){
+  $('lkUser').innerHTML=users.map(function(u){return '<option'+(cred&&cred.user===u?' selected':'')+'>'+esc(u)+'</option>'}).join('');
+  $('lock').classList.add('show');$('who').textContent='';$('signOut').style.display='none';
+}
+function hideLock(){$('lock').classList.remove('show');$('who').textContent=cred?cred.user:'';$('signOut').style.display=cred?'':'none'}
+function lockCheck(){if(!cred)showLock();else hideLock()}
+$('lkBtn').onclick=function(){
+  var u=$('lkUser').value,p=$('lkPin').value.trim();if(!p){$('lkMsg').textContent='Type your PIN';return}
+  $('lkMsg').textContent='Checking…';$('lkMsg').className='msg';
+  post(PROF_URL,{user:u,pin:p,action:'login'}).then(function(r){
+    if(r.error){$('lkMsg').textContent=r.error;$('lkMsg').className='msg bad';$('lkPin').value='';return}
+    cred={user:u,pin:p};lsw('profiles_cred',JSON.stringify(cred));lsw('profiles_last_user',u);if(r.users)users=r.users;stt.prof='';loaded={};$('lkPin').value='';$('lkMsg').textContent='';hideLock();render();
+  }).catch(function(){$('lkMsg').textContent='No connection - try again';$('lkMsg').className='msg bad'});
+};
+$('lkPin').addEventListener('keydown',function(e){if(e.key==='Enter')$('lkBtn').click()});
+$('signOut').onclick=function(){cred=null;try{localStorage.removeItem('profiles_cred')}catch(e){}notes={};loaded={};showLock();render()};
+// a PIN refused by the server (changed elsewhere) brings the sign-in back
+setInterval(function(){if(!cred&&!$('lock').classList.contains('show'))showLock()},1500);
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&cred){loaded={};loadNotes(true)}});
+lockCheck();
 </script></body></html>

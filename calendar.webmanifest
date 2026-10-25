@@ -1,0 +1,16 @@
+{
+  "name": "Period Calendar",
+  "short_name": "Calendar",
+  "description": "Connolly Site period calendar with shared supervisor notes",
+  "start_url": "./calendar.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    { "src": "cal-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "cal-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "cal-icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
