@@ -85,6 +85,7 @@ li.A{background:var(--a)}li.B{background:var(--b)}li.cur{font-weight:700;outline
 <div id="lock"><div class="lk"><h2>Period Calendar</h2><div class="mut">Supervisors only. Sign in once on this phone with your Profiles PIN. Notes are shared between the supervisors.</div>
 <label for="lkUser">Supervisor</label><select id="lkUser"></select>
 <label for="lkPin">PIN</label><input type="password" id="lkPin" inputmode="numeric" autocomplete="current-password" maxlength="12">
+<div id="lkOpBox"><label for="lkOp">Onboard supervisor PIN <span style="font-weight:400">(shows holidays and Duty Roster)</span></label><input type="password" id="lkOp" inputmode="numeric" maxlength="12" autocomplete="off"></div>
 <button class="pri" id="lkBtn">Sign in</button><div class="msg bad" id="lkMsg"></div></div></div>
 <script>
 // Anchor: first day of a period. Change here if the cycle ever shifts.
@@ -314,6 +315,7 @@ render();
 
 /* ===== Sign-in for the whole calendar (shared with Profiles: same supervisors, same PIN; wrong PINs can be retried) ===== */
 function showLock(){
+  $('lkOpBox').style.display=opPin?'none':'';
   $('lkUser').innerHTML=users.map(function(u){return '<option'+(cred&&cred.user===u?' selected':'')+'>'+esc(u)+'</option>'}).join('');
   $('lock').classList.add('show');$('who').textContent='';$('signOut').style.display='none';
 }
@@ -324,6 +326,7 @@ $('lkBtn').onclick=function(){
   $('lkMsg').textContent='Checking…';$('lkMsg').className='msg';
   post(PROF_URL,{user:u,pin:p,action:'login'}).then(function(r){
     if(r.error){$('lkMsg').textContent=r.error;$('lkMsg').className='msg bad';$('lkPin').value='';return}
+    var op=$('lkOp').value.trim();if(op){opPin=op;lsw('cal_op_pin',op);hol=null;duty=null;stt.hol='';$('lkOp').value='';}
     cred={user:u,pin:p};lsw('profiles_cred',JSON.stringify(cred));lsw('profiles_last_user',u);if(r.users)users=r.users;stt.prof='';loaded={};$('lkPin').value='';$('lkMsg').textContent='';hideLock();render();
   }).catch(function(){$('lkMsg').textContent='No connection - try again';$('lkMsg').className='msg bad'});
 };
