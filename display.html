@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="On Duty">
+<title>BVN Connolly - On Duty</title>
+<meta name="theme-color" content="#0a1633">
+<style>
+  :root { --rh: 60px; --blue1: #1b4fd8; --blue2: #1643bd; --head: #1238a6; --yel: #f5d547; --ink: #ffffff; --soft: #bcd0ff; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #060d22; color: var(--ink); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; overflow: hidden; }
+  #app { height: 100%; display: flex; flex-direction: column; padding: 1.2vh 1.2vw; gap: 0; }
+  .board { flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--head); border: 2px solid #3f6be0; box-shadow: 0 0 40px rgba(20,60,200,.35); }
+  /* header like a station departure board */
+  header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 1.2vh 1.6vw .6vh; background: linear-gradient(180deg, #1a47c6, #1238a6); }
+  .ttl { display: flex; align-items: baseline; gap: 2vw; }
+  .ttl h1 { margin: 0; font-size: 7vh; font-weight: 500; color: var(--yel); letter-spacing: .01em; line-height: 1; }
+  .ttl em { font-size: 6vh; color: var(--yel); }
+  .clock { font-size: 7.6vh; font-weight: 400; letter-spacing: .03em; font-variant-numeric: tabular-nums; }
+  .brand { text-align: right; line-height: 1.05; }
+  .brand b { display: block; font-size: 5vh; letter-spacing: .06em; }
+  .brand span { display: block; font-size: 2vh; font-weight: 700; letter-spacing: .3em; }
+  .brand i { display: block; font-size: 2.3vh; color: var(--soft); margin-top: .4vh; font-style: normal; }
+  .cols, .row { display: grid; grid-template-columns: var(--gcols, minmax(0,10.5fr) minmax(0,8.5fr) minmax(0,38fr) minmax(0,43fr)); align-items: center; column-gap: 1vw; padding: 0 1.6vw; }
+  .cols { padding-top: .6vh; padding-bottom: .9vh; font-size: 2.5vh; color: var(--ink); line-height: 1.15; border-bottom: 1px solid rgba(255,255,255,.12); background: linear-gradient(180deg, #1238a6, #1546c9); }
+  .cols i { display: block; color: var(--ink); opacity: .9; }
+  .pgh { position: relative; padding-right: 7em; }
+  .pgh i { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #pgInfo { position: absolute; right: 0; top: 50%; transform: translateY(-50%); color: var(--yel); font-weight: 700; font-size: 1.15em; }
+  #rows { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .row { flex: 1 1 0; min-height: 0; max-height: 15vh; background: var(--blue1); }
+  .row:nth-child(even) { background: var(--blue2); }
+  .tm { font-size: calc(var(--rh) * .46); font-variant-numeric: tabular-nums; line-height: 1; white-space: nowrap; }
+  .tm small { display: block; font-size: .5em; color: var(--yel); margin-top: .15em; }
+  .box { display: inline-block; background: #fff; color: #d6211f; font-weight: 800; font-size: calc(var(--rh) * .34); letter-spacing: .06em; padding: .18em .45em; border-radius: 3px; line-height: 1.1; text-transform: uppercase; min-width: 3.1em; text-align: center; }
+  .tn { display: block; font-size: calc(var(--rh) * .18); color: var(--soft); margin-top: .25em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nm { font-size: calc(var(--rh) * .42); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
+  .nm small { display: block; font-size: .55em; color: var(--yel); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nm.none { color: rgba(255,255,255,.45); }
+  .rc { display: inline-block; min-width: 2.7em; margin-right: .4em; padding: .06em .3em; border-radius: 3px; background: var(--yel); color: #0b1f63; font-size: .62em; font-weight: 800; letter-spacing: .03em; text-align: center; vertical-align: .14em; line-height: 1.25; }
+  .info { overflow: hidden; white-space: nowrap; position: relative; height: 100%; display: flex; align-items: center; mask-image: linear-gradient(90deg, transparent 0, #000 2%, #000 98%, transparent 100%); -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 2%, #000 98%, transparent 100%); }
+  .info span { display: inline-block; font-size: calc(var(--rh) * .36); will-change: transform; }
+  .info .cu { color: var(--yel); font-weight: 700; }
+  .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 4vh; color: var(--soft); text-align: center; padding: 4vh; background: var(--blue1); }
+  .empty small { font-size: 2.4vh; margin-top: 1.5vh; max-width: 70vw; }
+  /* teams on the left, news panel (TV) on the right when there is news */
+  .main { flex: 1; min-height: 0; display: flex; }
+  .left { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  #news { display: none; flex: 0 0 38%; min-width: 0; flex-direction: column; background: #0a1a4d; border-left: 2px solid #3f6be0; }
+  body.hasnews #news { display: flex; }
+  @media (min-width: 801px) {
+    body.hasnews .cols, body.hasnews .row { grid-template-columns: minmax(0,13fr) minmax(0,10.5fr) minmax(0,44fr) minmax(0,32.5fr); }
+    body.hasnews .cols i { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  }
+  .nwhead { display: flex; align-items: center; gap: 1vw; padding: .9vh 1.2vw; background: #0b1f63; border-bottom: 1px solid rgba(255,255,255,.12); }
+  .nwhead b { background: #d6211f; color: #fff; padding: .35vh .8vw; font-size: 2.6vh; letter-spacing: .14em; }
+  .nwhead i { font-style: normal; font-size: 2.2vh; color: var(--soft); letter-spacing: .08em; text-transform: uppercase; }
+  .nwhead span { margin-left: auto; color: var(--soft); font-size: 2vh; font-variant-numeric: tabular-nums; }
+  #nwCard { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 1.3vh; padding: 1.6vh 1.3vw; overflow: hidden; }
+  #nwCard.in { animation: nwIn .7s ease-out; }
+  @keyframes nwIn { from { opacity: 0; transform: translateY(1.5vh); } to { opacity: 1; transform: none; } }
+  .nwm { flex: 0 1 auto; width: 100%; aspect-ratio: 16 / 9; max-height: 58%; background: #000; border-radius: 4px; overflow: hidden; }
+  .nwm img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .nwm iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .nwt { font-size: 4.4vh; font-weight: 800; color: var(--yel); line-height: 1.1; overflow-wrap: anywhere; }
+  #nwCard.nomedia .nwt { font-size: 6vh; }
+  .nwx { flex: 1; min-height: 0; overflow: hidden; font-size: 2.9vh; line-height: 1.3; color: #fff; white-space: pre-line; overflow-wrap: anywhere; }
+  /* bottom line: news headlines + announcements, TV style */
+  #ticker { display: none; overflow: hidden; white-space: nowrap; background: #0b1f63; border-top: 2px solid var(--yel); }
+  #ticker.on { display: flex; align-items: stretch; }
+  #tkLbl { flex: none; display: flex; align-items: center; background: #d6211f; color: #fff; font-weight: 800; letter-spacing: .12em; padding: 0 1.2vw; font-size: 3vh; }
+  #tkw { flex: 1; min-width: 0; overflow: hidden; }
+  #tk { display: inline-block; padding: .8vh 0; font-size: 3.8vh; color: var(--yel); font-weight: 700; will-change: transform; }
+  footer { display: flex; justify-content: space-between; align-items: center; color: #8ea7e6; font-size: 1.6vh; padding-top: .7vh; }
+  .dot { display: inline-block; width: 1.1vh; height: 1.1vh; border-radius: 50%; background: #4ade80; margin-right: .5vw; vertical-align: middle; }
+  .dot.bad { background: #f87171; }
+  footer button { background: transparent; color: #8ea7e6; border: 1px solid #2c4aa0; padding: .4vh .9vw; font: inherit; cursor: pointer; border-radius: 4px; }
+  #pop { display: none; position: fixed; inset: 6vh 5vw; z-index: 15; background: #0b1f63; border: 4px solid var(--yel); box-shadow: 0 0 0 100vmax rgba(0,0,0,.75); flex-direction: column; align-items: center; justify-content: center; padding: 4vh 4vw; text-align: center; }
+  #pop.on { display: flex; }
+  #popLabel { font-size: 3vh; letter-spacing: .3em; color: var(--yel); text-transform: uppercase; margin-bottom: 3vh; font-weight: 700; }
+  #popText { font-weight: 700; line-height: 1.15; color: #fff; max-width: 100%; overflow-wrap: anywhere; }
+  /* big screen (landscape, full screen): larger text */
+  @media (min-width: 801px) {
+    header { padding-top: .8vh; padding-bottom: .3vh; }
+    .ttl h1 { font-size: 6.4vh; } .ttl em { font-size: 5.4vh; } .clock { font-size: 7vh; }
+    .cols { font-size: 2.1vh; padding-top: .3vh; padding-bottom: .5vh; }
+    .tm { font-size: calc(var(--rh) * .54); }
+    .box { font-size: calc(var(--rh) * .4); }
+    .tn { font-size: calc(var(--rh) * .2); }
+    .nm { font-size: calc(var(--rh) * .52); }
+    .info span { font-size: calc(var(--rh) * .44); }
+    #tk { font-size: 4.2vh; }
+  }
+  /* phone: the news card goes under the teams */
+  @media (max-width: 800px) {
+    /* news and the announcement line first, the teams under them: nobody misses the announcements */
+    .main { flex-direction: column; order: 3; }
+    header { order: 1; } #ticker { order: 2; border-top: 0; border-bottom: 2px solid var(--yel); }
+    #news { flex: none; order: -1; border-left: 0; border-bottom: 2px solid #3f6be0; }
+    .nwhead b { font-size: 14px; padding: 3px 8px; } .nwhead i { font-size: 12px; } .nwhead span { font-size: 12px; }
+    #nwCard { padding: 12px; gap: 10px; }
+    .nwm { max-height: none; }
+    .nwt, #nwCard.nomedia .nwt { font-size: 22px; }
+    .nwx { font-size: 16px; overflow: visible; }
+    #tkLbl { font-size: 14px; padding: 0 10px; }
+  }
+  /* phone (QR code): one card per team, the page scrolls */
+  @media (max-width: 800px) {
+    html, body { height: auto; overflow: auto; }
+    #app { height: auto; min-height: 100vh; padding: 8px; }
+    header { grid-template-columns: 1fr auto; row-gap: 4px; padding: 10px 12px 6px; }
+    .ttl h1 { font-size: 30px; } .ttl em { display: none; }
+    .clock { font-size: 26px; text-align: right; }
+    .brand { grid-column: 1 / -1; text-align: left; }
+    .brand b, .brand span { display: none; }
+    .brand i { font-size: 17px; margin-top: 0; color: #fff; }
+    .cols { display: none; }
+    #rows { display: block; }
+    .row { --rh: 64px; max-height: none; grid-template-columns: auto auto 1fr; grid-template-areas: "tm box box" "n1 n1 n1" "n2 n2 n2" "info info info"; row-gap: 6px; padding: 10px 12px; }
+    .tm { grid-area: tm; } .bx { grid-area: box; } .n1 { grid-area: n1; } .n2 { grid-area: n2; } .n2:empty { display: none; } .info { grid-area: info; height: 30px; } .info span { font-size: 18px; }
+    .info:empty, .info span:empty { display: none; }
+    .nm { white-space: normal; } .row { max-height: none !important; }
+    #tk { font-size: 20px; }
+    footer { font-size: 12px; padding: 8px 2px 16px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="board">
+    <header>
+      <div class="ttl"><h1>On Duty</h1><em>Connolly</em></div>
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="brand"><b>BVN</b><span>BIDVEST NOONAN</span><i id="day"></i></div>
+    </header>
+    <div class="main">
+      <div class="left">
+        <div class="cols" id="cols"></div>
+        <div id="rows"></div>
+      </div>
+      <aside id="news"><div class="nwhead"><b>NEWS</b><i>Connolly</i><span id="nwCount"></span></div><div id="nwCard"></div></aside>
+    </div>
+    <div id="ticker"><span id="tkLbl">INFO</span><div id="tkw"><div id="tk"></div></div></div>
+  </div>
+  <footer><span><span class="dot" id="dot"></span><span id="status">Loading...</span></span><span><button id="fs">Full screen</button></span></footer>
+</div>
+<div id="pop"><div id="popLabel">Announcement</div><div id="popText"></div></div>
+<script>
+(function () {
+  // Onboard Patrol backend (public feeds only: no PIN on this screen)
+  var URL_ = 'https://script.google.com/macros/s/AKfycbzyF9G_x34LnFZwufDixy3yff7WdMxnVlfeohSYnmlN8Dg025mdryAWMy1K-z0UA6dPTw/exec';
+  var REFRESH_MS = 60000;
+  var $ = function (id) { return document.getElementById(id); };
+  var data = null, lastOk = 0, staticSig = '', infoAnims = {};
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function norm(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
+  function getJSON(q) { return fetch(URL_ + '?' + q + '&t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }); }
+
+  function tick() {
+    var d = new Date();
+    $('clock').textContent = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Europe/Dublin' });
+    var shown = data && data.date ? new Date(data.date + 'T12:00:00Z') : d;
+    $('day').textContent = shown.toLocaleDateString('en-IE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: data && data.date ? 'UTC' : 'Europe/Dublin' });
+  }
+  setInterval(tick, 1000); tick();
+
+  // "16:30 - 00:30" -> start and end
+  function shiftParts(t) {
+    var m = String(t || '').match(/(\d{1,2})[:.h](\d{2})/g) || [];
+    var fix = function (x) { var p = x.split(/[:.h]/); return ('0' + p[0]).slice(-2) + ':' + p[1]; };
+    return { start: m[0] ? fix(m[0]) : '', end: m[1] ? fix(m[1]) : '' };
+  }
+  function initials(s) { var w = String(s || '').replace(/[^A-Za-z ]/g, ' ').trim().split(/\s+/); return (w.length > 1 ? w.map(function (x) { return x[0]; }).join('') : (w[0] || '').slice(0, 3)).slice(0, 4).toUpperCase(); }
+
+  // one line per team that has crew today, in the order of the dashboard Teams list; other posts (e.g. supervisor) at the end
+  function buildRows() {
+    var rows = (data && data.rows) || [], teams = (data && data.teams) || [], out = [], used = {};
+    teams.forEach(function (t) {
+      var mine = rows.filter(function (r) { return norm(r.team) === norm(t.code); });
+      if (!mine.length) return;
+      var ppl = [], time = '';
+      mine.forEach(function (r) {
+        used[r.post + '|' + r.team] = true;
+        if (!time && r.time) time = r.time;
+        (r.names || []).forEach(function (n, k) {
+          var note = (r.notes && r.notes[k]) || '', rc = radioShort((r.codes || [])[k]);
+          var f = ppl.filter(function (x) { return x.name === n; })[0];
+          if (f) { if (!f.note && note) f.note = note; if (!f.rc && rc) f.rc = rc; } else ppl.push({ name: n, note: note, rc: rc });
+        });
+      });
+      out.push({ key: t.code, code: t.code, name: t.name, time: time, ppl: ppl, msgs: (data.msgs || {})[t.code] || [] });
+    });
+    rows.filter(function (r) { return !used[r.post + '|' + r.team] && (r.names || []).length; }).forEach(function (r) {
+      out.push({ key: 'post:' + r.post, code: /supervisor/i.test(r.post) ? 'SUP' : initials(r.post), name: r.post, time: r.time || '', ppl: r.names.map(function (n, k) { return { name: n, note: (r.notes && r.notes[k]) || '', rc: radioShort((r.codes || [])[k]) }; }), msgs: [] });
+    });
+    return out;
+  }
+  // "SL1:2400 130" -> "SL1" (the radio call sign shown beside the name)
+  function radioShort(c) {
+    c = String(c || '').trim(); if (!c) return '';
+    var m = /^([A-Za-z]+\s?\d*)\s*:/.exec(c);
+    return (m ? m[1] : c.split(/\s+/)[0]).replace(/\s+/g, '').slice(0, 6).toUpperCase();
+  }
+  function personHtml(p, extra) {
+    if (!p) return '<div class="nm none">&mdash;</div>';
+    var sub = [p.note, extra].filter(Boolean).join(' · ');
+    return '<div class="nm">' + (p.rc ? '<span class="rc">' + esc(p.rc) + '</span>' : '') + esc(p.name) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>';
+  }
+  // header and column widths for 2, 3 or 4 officers; the information column gives up the space
+  var SUBS = ['phone · bodycam 1', 'key · bodycam 2', 'bodycam 3', 'bodycam 4'];
+  var nCols = 2;
+  // one officers column: the names one under the other (1st, 2nd, 3rd...)
+  function setColumns(n) {
+    nCols = n;
+    $('cols').innerHTML = '<div>Shift<i>time</i></div><div>Team<i>post</i></div><div>Officers<i>on duty</i></div><div class="pgh">Information<i>messages for the team</i><b id="pgInfo"></b></div>';
+  }
+  setColumns(2);
+  // only the supervisor's messages for that team (typed in the dashboard, Announcements tab)
+  function infoHtml(r) {
+    return (r.msgs || []).map(function (t) { return '<b class="cu">' + esc(t) + '</b>'; }).join('&nbsp;&nbsp;&nbsp;&#9670;&nbsp;&nbsp;&nbsp;');
+  }
+  function render() {
+    var list = buildRows(), box = $('rows');
+    if (!list.length) {
+      staticSig = '';
+      box.innerHTML = '<div class="empty">No crew received from the Duty Roster for today<small>In the Duty Roster open today, press "Mark day as ready" and wait a minute. The names appear here automatically.</small></div>';
+      return;
+    }
+    // TV: letters stay big; when the teams do not fit, they are shown in pages that change by themselves
+    var narrowP = window.matchMedia && window.matchMedia('(max-width: 800px)').matches;
+    var linesOf = function (r) { return Math.max(1, Math.round(r.ppl.length * 0.62 * 100) / 100); };
+    var groups = [list];
+    pageLines = 0;
+    if (!narrowP) {
+      var maxL = Math.max(1, Math.floor(box.clientHeight / (window.innerHeight * MIN_LINE)));
+      groups = []; var cur = [], used = 0;
+      list.forEach(function (r) { var l = linesOf(r); if (cur.length && used + l > maxL) { groups.push(cur); cur = []; used = 0; } cur.push(r); used += l; });
+      if (cur.length) groups.push(cur);
+      if (groups.length > 1) pageLines = Math.max.apply(null, groups.map(function (g) { return g.reduce(function (a, r) { return a + linesOf(r); }, 0); }));
+    }
+    pages = groups.length; if (page >= pages) page = 0;
+    list = groups[page];
+    var pi = $('pgInfo'); if (pi) pi.textContent = pages > 1 ? 'Page ' + (page + 1) + ' / ' + pages : '';
+    var sig = JSON.stringify([page, pages, list.map(function (r) { return [r.key, r.code, r.name, r.time, r.ppl]; })]);
+    if (sig !== staticSig) {
+      staticSig = sig; infoAnims = {};
+      // 3rd, 4th... officer: an extra line in the same row, name under name (3rd under Officer 1, 4th under Officer 2)
+      var narrow = window.matchMedia && window.matchMedia('(max-width: 800px)').matches;
+      box.innerHTML = list.map(function (r) {
+        // row height follows the number of names (each name a bit more than half a standard line)
+        var sp = shiftParts(r.time), lines = Math.max(1, Math.round(r.ppl.length * 0.62 * 100) / 100), c1 = '';
+        r.ppl.forEach(function (p) { c1 += personHtml(p); });
+        if (!r.ppl.length) c1 = personHtml(null);
+        var cells = '<div class="n1">' + c1 + '</div>';
+        return '<div class="row" data-k="' + esc(r.key) + '" data-l="' + lines + '" style="flex-grow:' + lines + ';max-height:' + (15 * lines) + 'vh">' +
+          '<div class="tm">' + (sp.start ? esc(sp.start) + (sp.end ? '<small>&rarr; ' + esc(sp.end) + '</small>' : '') : '&mdash;') + '</div>' +
+          '<div class="bx"><span class="box">' + esc(r.code) + '</span><span class="tn">' + esc(r.name) + '</span></div>' +
+          cells +
+          '<div class="info"><span></span></div></div>';
+      }).join('');
+      fitRows();
+    }
+    // the scrolling information: only restarted when its text changes
+    list.forEach(function (r) {
+      var row = box.querySelector('.row[data-k="' + (window.CSS && CSS.escape ? CSS.escape(r.key) : r.key) + '"]'); if (!row) return;
+      var html = infoHtml(r), span = row.querySelector('.info span');
+      if (infoAnims[r.key] && infoAnims[r.key].html === html) return;
+      if (infoAnims[r.key] && infoAnims[r.key].anim) infoAnims[r.key].anim.cancel();
+      span.innerHTML = html;
+      infoAnims[r.key] = { html: html, anim: scroll(span, row.querySelector('.info')) };
+    });
+  }
+  var MIN_LINE = 0.08, page = 0, pages = 1, pageLines = 0;   // smallest line = 8% of the screen height
+  setInterval(function () { if (pages > 1) { page = (page + 1) % pages; render(); } }, 15000);
+  // right to left, continuous, same speed on every line
+  function scroll(span, cell) {
+    if (!span.textContent || !span.animate) return null;
+    var w = span.scrollWidth, cw = cell.clientWidth, speed = Math.max(60, cw / 9);
+    return span.animate([{ transform: 'translateX(' + cw + 'px)' }, { transform: 'translateX(' + (-w) + 'px)' }], { duration: (w + cw) / speed * 1000, iterations: Infinity });
+  }
+  // every line gets the same height; text size follows the line height
+  function fitRows() {
+    var box = $('rows'), n = 0;
+    Array.prototype.forEach.call(box.querySelectorAll('.row'), function (r) { n += Number(r.getAttribute('data-l')) || 1; });
+    n = Math.max(n || 1, pageLines);   // every page with the same letter size
+    var narrow = window.matchMedia && window.matchMedia('(max-width: 800px)').matches;
+    if (narrow) { document.documentElement.style.removeProperty('--rh'); return; }
+    // also limited by the width, so names fit their column (more officer columns = narrower columns)
+    var h = Math.min(box.clientHeight / n, window.innerHeight * 0.15, box.clientWidth * (document.body.classList.contains('hasnews') ? 0.068 : 0.065));
+    document.documentElement.style.setProperty('--rh', Math.max(18, Math.floor(h)) + 'px');
+  }
+  window.addEventListener('resize', function () { fitRows(); staticSig = ''; render(); });
+
+  function setStatus(ok, msg) { $('dot').className = 'dot' + (ok ? '' : ' bad'); $('status').textContent = msg; }
+  function load() {
+    getJSON('format=board').then(function (r) {
+      if (!r || !Array.isArray(r.rows) || !Array.isArray(r.teams)) throw new Error('bad');
+      data = r; lastOk = Date.now(); tick(); applyNews(Array.isArray(r.news) ? r.news : []); render();
+      setStatus(true, 'Updated ' + new Date().toLocaleTimeString('en-IE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Dublin' }) + ' · refreshes every minute');
+    }).catch(function () {
+      setStatus(false, lastOk ? 'No connection - showing the last update (' + new Date(lastOk).toLocaleTimeString('en-IE', { hour: '2-digit', minute: '2-digit' }) + ')' : 'No connection');
+    });
+  }
+  load();
+  setInterval(load, REFRESH_MS);
+
+  /* ---- Full screen (iPhone: hides the bottom bar instead) ---- */
+  $('fs').onclick = function () {
+    var el = document.documentElement, rq = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (document.fullscreenElement || document.webkitFullscreenElement) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+    if (rq) { try { var p = rq.call(el); if (p && p.catch) p.catch(function () { cleanMode(); }); return; } catch (e) {} }
+    cleanMode();
+  };
+  function cleanMode() {
+    var f = document.querySelector('footer'); f.style.display = 'none'; fitRows();
+    setTimeout(function () { document.addEventListener('click', function () { f.style.display = ''; fitRows(); }, { once: true }); }, 300);
+  }
+
+  /* ---- Announcements (public feed): bottom line + full-screen pop-up ---- */
+  var annSig = '', tickAnim = null, pops = [], popIdx = 0, popT = null, popSig = '', annLast = [];
+  // one announcement at a time: it crosses the screen, then the next one comes in (then back to the first)
+  var tkList = [], tkIdx = 0;
+  function showTicker(texts) {
+    var box = $('ticker'), tk = $('tk');
+    if (tickAnim) { tickAnim.onfinish = null; tickAnim.cancel(); } tickAnim = null;
+    tkList = texts.slice(); tkIdx = 0;
+    if (!texts.length) { box.classList.remove('on'); tk.textContent = ''; fitRows(); return; }
+    box.classList.add('on'); fitRows();
+    tickNext();
+  }
+  function tickNext() {
+    var tk = $('tk');
+    if (!tkList.length) return;
+    tk.textContent = tkList[tkIdx % tkList.length];
+    if (!tk.animate) { tk.textContent = tkList.join('   ◆   '); return; }
+    var w = tk.scrollWidth, cw = $('tkw').clientWidth, speed = Math.max(90, cw / 14);
+    tickAnim = tk.animate([{ transform: 'translateX(' + cw + 'px)' }, { transform: 'translateX(' + (-w) + 'px)' }], { duration: (w + cw) / speed * 1000, iterations: tkList.length > 1 ? 1 : Infinity });
+    tickAnim.onfinish = function () { tkIdx++; tickNext(); };
+  }
+  function fitPop() {
+    var t = $('popText'), box = $('pop'), fs = Math.round(window.innerHeight * 0.18);
+    t.style.fontSize = fs + 'px';
+    while (fs > 14 && (t.scrollHeight > box.clientHeight * 0.72 || t.scrollWidth > box.clientWidth * 0.94)) { fs = Math.round(fs * 0.93); t.style.fontSize = fs + 'px'; }
+  }
+  function popCycle() {
+    clearTimeout(popT);
+    if (!pops.length) { $('pop').classList.remove('on'); return; }
+    var it = pops[popIdx % pops.length];
+    $('popText').textContent = it.text; $('pop').classList.add('on'); fitPop();
+    if (pops.length === 1 && !it.gapSec) return;
+    popT = setTimeout(function () { $('pop').classList.remove('on'); popIdx++; popT = setTimeout(popCycle, Math.max(0, it.gapSec || 0) * 1000); }, Math.max(3, it.showSec || 15) * 1000);
+  }
+  function applyAnnouncements(items) {
+    var ticks = items.filter(function (a) { return a.mode !== 'popup'; }), pp = items.filter(function (a) { return a.mode === 'popup'; });
+    annTexts = ticks.map(function (a) { return a.text; });
+    refreshTicker();
+    var ps = JSON.stringify(pp.map(function (a) { return [a.id, a.text, a.showSec, a.gapSec]; }));
+    if (ps !== popSig) { popSig = ps; pops = pp; popIdx = 0; popCycle(); }
+  }
+  // bottom line = announcements + headlines of the news marked for it
+  var annTexts = [], newsHeads = [];
+  function refreshTicker() {
+    var all = annTexts.concat(newsHeads), sig = JSON.stringify(all);
+    if (sig === annSig) return;
+    annSig = sig;
+    $('tkLbl').textContent = newsHeads.length ? 'NEWS' : 'INFO';
+    showTicker(all);
+  }
+
+  /* ---- News panel (TV): one item at a time, photo or video (muted) ---- */
+  var news = [], nwIdx = 0, nwT = null, nwSig = '';
+  function embedUrl(u) {
+    var m = /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{11})/.exec(u || '');
+    if (m) return 'https://www.youtube.com/embed/' + m[1] + '?autoplay=1&mute=1&loop=1&playlist=' + m[1] + '&controls=0&rel=0&modestbranding=1&playsinline=1';
+    m = /drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:.*&)?id=)([\w-]+)/.exec(u || '');
+    if (m) return 'https://drive.google.com/file/d/' + m[1] + '/preview';
+    return '';
+  }
+  function fitNewsText() {
+    var x = document.querySelector('#nwCard .nwx'); if (!x || window.matchMedia('(max-width: 800px)').matches) return;
+    x.style.fontSize = ''; var fs = parseFloat(getComputedStyle(x).fontSize), min = window.innerHeight * 0.017;
+    while (fs > min && x.scrollHeight > x.clientHeight + 1) { fs *= 0.92; x.style.fontSize = fs + 'px'; }
+  }
+  function showNews() {
+    clearTimeout(nwT);
+    var card = $('nwCard');
+    if (!news.length) { card.innerHTML = ''; $('nwCount').textContent = ''; return; }
+    var it = news[nwIdx % news.length], src = it.video ? embedUrl(it.video) : '';
+    var media = src ? '<div class="nwm"><iframe src="' + esc(src) + '" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>'
+      : (it.image ? '<div class="nwm"><img src="' + esc(it.image) + '" alt=""></div>' : '');
+    card.className = media ? '' : 'nomedia';
+    card.innerHTML = media + '<div class="nwt">' + esc(it.title) + '</div>' + (it.text ? '<div class="nwx">' + esc(it.text) + '</div>' : '');
+    void card.offsetWidth; card.classList.add('in');
+    $('nwCount').textContent = news.length > 1 ? (nwIdx % news.length + 1) + ' / ' + news.length : '';
+    fitNewsText();
+    if (news.length > 1) nwT = setTimeout(function () { nwIdx++; showNews(); }, src ? 60000 : 12000 + Math.min(String(it.text || '').length * 40, 12000));
+  }
+  // only rebuilt when the news change, so a video is not restarted by the refresh every minute
+  function applyNews(list) {
+    var sig = JSON.stringify(list);
+    if (sig === nwSig) return;
+    nwSig = sig; news = list; nwIdx = 0;
+    document.body.classList.toggle('hasnews', list.length > 0);
+    showNews();
+    newsHeads = list.filter(function (n) { return n.ticker; }).map(function (n) { return n.title; });
+    refreshTicker();
+    staticSig = ''; fitRows();
+  }
+  window.addEventListener('resize', fitNewsText);
+
+  function loadAnn() { getJSON('format=announcements').then(function (r) { if (r && Array.isArray(r.items)) { annLast = r.items; applyAnnouncements(annLast); } }).catch(function () {}); }
+  setInterval(loadAnn, 30000);
+  window.addEventListener('resize', function () { if ($('pop').classList.contains('on')) fitPop(); annSig = ''; applyAnnouncements(annLast); });
+  loadAnn();
+  window.__display = { load: load, render: render, loadAnn: loadAnn };
+})();
+</script>
+</body>
+</html>
