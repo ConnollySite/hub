@@ -149,7 +149,7 @@ function lsw(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 function ds(t){return new Date(t).toISOString().slice(0,10)}
 function longDate(t){var d=new Date(t);return DOW[(d.getUTCDay()+2)%7]+' '+fmtY(t)}
 var cred=null;try{cred=JSON.parse(ls('profiles_cred')||'null')}catch(e){}
-var users=['Leandro Rocha','Michal Rogala'];
+var users=['Leandro Rocha','Jack Lydon'];
 var people=[], notes={}, loaded={}, opPin=ls('cal_op_pin')||ls('holiday_cloud_pin')||ls('roster_op_pin')||'';
 try{opPin=opPin||sessionStorage.getItem('holiday_cloud_pin')||''}catch(e){}
 var shownDay='', hol=null, duty=null, stt={prof:'',hol:'',duty:''}, editing=null;
