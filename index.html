@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Connolly Site - Apps</title>
+<title>CSS – Connolly Site System</title>
 <link rel="manifest" href="hub.webmanifest">
 <link rel="icon" type="image/png" href="hub-icon-192.png">
 <link rel="apple-touch-icon" href="hub-icon-apple.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Apps">
-<meta name="theme-color" content="#0E2A47">
+<meta name="apple-mobile-web-app-title" content="CSS">
+<meta name="theme-color" content="#1A4396">
 <style>
-  :root { --navy:#0E2A47; --ink:#17212B; --mute:#5B6B7B; --line:#DDE4EC; --bg:#F3F6FA; --card:#fff; --blue:#2E6FBF; }
+  :root { --navy:#1A4396; --ink:#17212B; --mute:#5B6B7B; --line:#DDE4EC; --bg:#F3F6FA; --card:#fff; --blue:#2E6FBF; }
   @media (prefers-color-scheme: dark) {
     :root { --ink:#E8EEF4; --mute:#9FB0C0; --line:#2A3A4B; --bg:#0B1620; --card:#132333; --blue:#6AA6EA; }
   }
@@ -29,14 +29,53 @@
   a.app b { display:block; font-size:16px; }
   a.app span { display:block; font-size:12.5px; color:var(--mute); margin-top:3px; }
   footer { text-align:center; font-size:12px; color:var(--mute); padding:22px 16px 30px; }
+  .chips { display:flex; flex-wrap:wrap; gap:4px; }
+  a.chip { background:var(--card); border:1px solid var(--line); border-radius:6px; padding:3px 7px; font-size:11px; font-weight:600; text-decoration:none; color:inherit; white-space:nowrap; }
+  a.chip:hover, a.chip:focus-visible { border-color:var(--blue); color:var(--blue); outline:none; }
 </style>
 </head>
 <body>
 <header>
-  <h1>Connolly Site - Apps</h1>
+  <h1 style="display:flex;align-items:center;gap:12px"><img src="hub-icon-192.png" alt="" style="width:44px;height:44px;border-radius:10px;box-shadow:0 0 0 2px rgba(255,255,255,.35)">CSS – Connolly Site System</h1>
   <p>One page for everything. Every button opens in a new tab. Save this page in your bookmarks.</p>
 </header>
 <main>
+  <h2>Quick links</h2>
+  <div class="chips">
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=307488">AV</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=307218">BE</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=306981">BR</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=303592">C AS</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView/Index/306948">CD</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=306958">CN</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView/Index/303483">CY</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView/Index/306985">DN</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=307489">DR</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=306984">DS</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=303630">Events</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=303534">HS</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=303662">KI</a>
+    <a class="chip" id="ltLink" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView/Index/306949" title="Late Trains – opens on today">LT</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView/Index/310149">ML/BL</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=303532">NA/NB</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView/Index/306982">NC</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=303551">NO</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=310143">NW/NE</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView/Index/303624">PE</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=306987">PL</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=303613">RO</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView/Index/303654">SA/SC</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView/Index/306973">SB</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=303522">SD</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=303612">SD (AS)</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=303524">SL</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView/Index/306954">SN</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=303523">Sup</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=303706">TA</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/Login?ReturnUrl=%2ftgnet%2f">TG login</a>
+    <a class="chip" target="_blank" rel="noopener" href="https://timesheets.bidvestnoonan.com/TGNet/SiteView?id=303533">VT</a>
+  </div>
+
   <h2>People</h2>
   <div class="grid">
     <a class="app" target="_blank" rel="noopener" href="https://connollysite.github.io/profiles/"><b>Profiles</b><span>Employees, notes, warnings, probation</span></a>
@@ -49,6 +88,7 @@
     <a class="app" target="_blank" rel="noopener" href="https://connollysite.github.io/rosters/"><b>Weekly Roster</b><span>Weeks, shifts and hours</span></a>
     <a class="app" target="_blank" rel="noopener" href="https://connollysite.github.io/rosters/duty.html"><b>Today's Teams</b><span>Daily crew, PDF, send to On-Board</span></a>
     <a class="app" target="_blank" rel="noopener" href="https://connollysite.github.io/rosters/holidays.html"><b>Holiday Manager</b><span>Holidays by person, shift cover</span></a>
+    <a class="app" target="_blank" rel="noopener" href="https://connollysite.github.io/rosters/availability.html"><b>Availability form</b><span>Link to send staff: they fill in when they can work</span></a>
   </div>
 
   <h2>Connolly Station Duties</h2>
@@ -74,5 +114,10 @@
   </div>
 </main>
 <footer>Sign in inside each app with your own PIN. No PINs are stored on this page.</footer>
+<script>
+// LT (Late Trains) always opens on today's date
+(function () { var d = new Date(), iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  var a = document.getElementById('ltLink'); if (a) a.href = a.href.split('?')[0] + '?searchDate=' + iso; })();
+</script>
 </body>
 </html>

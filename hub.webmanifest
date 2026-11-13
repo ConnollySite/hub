@@ -1,12 +1,12 @@
 {
-  "name": "Connolly Apps",
-  "short_name": "Apps",
+  "name": "CSS – Connolly Site System",
+  "short_name": "CSS",
   "id": "./index.html",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0E2340",
-  "theme_color": "#0E2340",
+  "background_color": "#1A4396",
+  "theme_color": "#1A4396",
   "icons": [
     {
       "src": "hub-icon-192.png",
